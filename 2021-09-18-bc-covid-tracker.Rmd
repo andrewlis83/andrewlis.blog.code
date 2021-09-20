@@ -1,0 +1,126 @@
+---
+title: "BC COVID Tracker"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: yeti
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(data.table)
+library(plotly)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+# Pull Case Count data for BC
+reg_df <- fread('http://www.bccdc.ca/Health-Info-Site/Documents/BCCDC_COVID19_Regional_Summary_Data.csv')
+
+# FOR FUTURE USE / BUILD OUT
+# Detailed Case Data
+# case_df <- fread('http://www.bccdc.ca/Health-Info-Site/Documents/BCCDC_COVID19_Dashboard_Case_Details.csv')
+
+# Lab Info
+# lab_df <- fread('http://www.bccdc.ca/Health-Info-Site/Documents/BCCDC_COVID19_Dashboard_Lab_Information.csv')
+
+```
+
+
+Health Authority
+===================================== 
+
+Column {data-width=550}
+-----------------------------------------------------------------------
+
+### COVID Case Counts
+
+```{r all cases}
+
+ggplotly(
+  ggplot(filter(reg_df, HA != 'Out of Canada', HSDA == 'All'), aes(x = Date, y = Cases_Reported)) +
+    geom_point(
+      color = 'darkgreen',
+      alpha = 0.15,
+      shape = 4,
+      size = 0.5
+    ) +
+    geom_smooth(
+      method = 'loess',
+      span = 0.05,
+      color = 'darkblue',
+      se = FALSE
+    ) +
+    facet_wrap('HA', scales = 'free_y') +
+    theme_minimal()
+)
+
+
+```
+
+
+HSDA
+===================================== 
+
+Column
+-----------------------------------------------------------------------
+
+### COVID Case Counts by HSDA
+
+```{r }
+
+ggplotly(
+  ggplot(filter(reg_df, HA != 'Out of Canada'), aes(x = Date, y = Cases_Reported)) +
+    geom_point(
+      color = 'darkgreen',
+      alpha = 0.15,
+      shape = 4,
+      size = 0.5
+    ) +
+    geom_smooth(
+      method = 'loess',
+      span = 0.05,
+      color = 'darkblue',
+      se = FALSE
+    ) +
+    facet_wrap('HSDA', scales = 'free_y') +
+    theme_minimal()
+)
+
+
+```
+
+
+
+Vancouver Island
+===================================== 
+
+Column
+-----------------------------------------------------------------------
+
+### COVID Case Counts on Vancouver Island 
+
+```{r }
+
+ggplotly(
+  ggplot(filter(reg_df, HA == 'Vancouver Island'), aes(x = Date, y = Cases_Reported)) +
+    geom_point(
+      color = 'darkgreen',
+      alpha = 0.15,
+      shape = 4,
+      size = 0.5
+    ) +
+    geom_smooth(
+      method = 'loess',
+      span = 0.05,
+      color = 'darkblue',
+      se = FALSE
+    ) +
+    facet_wrap('HSDA', scales = 'free_y') +
+    theme_minimal()
+)
+
+
+```
+
+
