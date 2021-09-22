@@ -3,12 +3,15 @@
 
 # This script pulls a zip file from the Canadian Real Estate Association (CREA)
 # which contains 2 excel files, and then rips through the excel sheets to turn
-# the data into a tidy(er) format that's more useful in the R environment.
+# the data into a tidy(er) format that's more useful in the R environment. There
+# is also some accompanying data viz.
 
 library(tidyverse)
 library(plyr)
 library(here)
 library(readxl)
+library(plotly)
+library(htmlwidgets)
 options(scipen = 999)
 
 # Sometimes the URL changes, the download link might need to be updated periodically.
@@ -53,8 +56,9 @@ setdiff(names(crea_sa), names(crea_nsa))
 unlink(here("CREA.zip"))
 rm(shtnms_nsa, shtnms_sa, nm)
 
-# Nice! Now we have 2 named lists containing all the excel sheets that were contained in those nasty Excel files.
-# Might as well plot some data while we're at it.
+
+# Now we have 2 named lists containing all the excel sheets that were contained in Excel files.
+# Might as well do a quick and dirty plot to check that the data is OK.
 
 # Quick and dirty plot comparing SA and NSA data...
 x <- data.frame(date = crea_nsa$aggregate$Date,
@@ -65,8 +69,10 @@ x <- data.frame(date = crea_nsa$aggregate$Date,
 ggplot(x, aes(x = date, y = value, color = name)) +
   geom_line()
 
-# But this is a cumbersome way to plot data, and ggplot likes data in long format, so it'd be
-# nice to convert these data into something more plot-friendly.
+rm(x)
+
+# ...but this is a cumbersome way to plot data, and ggplot likes data in long format, 
+# so it'd be nice to convert these data into something more ggplot-friendly.
 
 # plyr's ldply function is a nice way to unlist a nested list of this sort.
 
@@ -75,6 +81,13 @@ crea_nsa_df <- ldply(crea_nsa, data.frame, .id = 'Region') %>%
 
 crea_sa_df <- ldply(crea_sa, data.frame, .id = 'Region') %>%
   pivot_longer(!c(Date, Region))
+
+rm(crea_sa, crea_nsa)
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#                           DATA VIZ
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 
 # Let's plot out the values of all single detached homes across all regions
 p <- ggplot(filter(crea_nsa_df,
@@ -112,7 +125,49 @@ ggsave(here('_outputs', 'aptPrices.svg'), p, device = 'svg', width=8, height=15)
 
 
 
+# PLOTLY HEAT MAP WITH DIFFERENCES BETWEEN BENCHMAKRK VALUES BETWEEN MARKETS
 
+diff_mat_nsa_f <- function(SERIES) {
+  
+  df <- crea_nsa_df %>% 
+    filter(Date == max(Date), 
+           name == SERIES) %>%
+    select(Region, value)
+  
+  dmat <- as.data.frame(outer(df$value, df$value, '-'))
+  colnames(dmat) <- df$Region
+  dmat$Region <- df$Region
+  
+  # If you want the upper diagonal only, uncomment the line below
+  # dmat[lower.tri(dmat, diag = F)] <- NA
+  
+  p_df <- dmat %>%
+    pivot_longer(!Region) %>%
+    mutate(t = paste0("Diff: ", Region, ' - ', name, "\n", "Value: ", value))
+  
+  return(p_df)
+  
+}
 
+# List of possible series to series to plot:
+unique(crea_nsa_df$name)
 
+# Plug desired SERIES in and generate plot
+plot_dat <- diff_mat_nsa_f('Single_Family_Benchmark')
 
+p <- ggplot(plot_dat, 
+            aes(Region, 
+                name, 
+                fill = value, 
+                text = t)) + 
+  geom_tile(alpha = 0.85) +
+  scale_x_discrete(limits = levels(plot_dat$Region)) +
+  scale_y_discrete(limits = levels(plot_dat$Region)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  scale_fill_gradient(low="#14015e", high="#ffe3f1") +
+  labs( x = NULL, y=NULL, fill = "Price Difference" )
+
+p_dif <- ggplotly(p, tooltip='t') %>%
+  layout(title = list(text = "Price Differential - Single Detached Homes", pad = list(t = 15)))
+
+saveWidget(p_dif, here('_outputs', "p_dif.html"))
