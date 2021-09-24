@@ -122,10 +122,10 @@ xy <- merge(x, y, by = c('REF_DATE', 'GEO')) %>%
 p <- xy %>%
   ggplot(aes(x = REF_DATE, y = ValperPound, color = GEO)) +
   geom_line() +
-  facet_wrap('GEO', scales = 'free_y') +
+  facet_wrap('GEO') +
   scale_x_continuous(breaks = seq(1924, 2034, 10)) +
   labs(title = "Value of Natural Honey, per Pound",
-       subtitle = 'Dollars',
+       subtitle = 'by Province',
        x = 'Date',
        y = "Dollars",
        caption = 'Statistics Canada Table 32-10-0353-01\nandrewlis.blog') +
