@@ -135,12 +135,11 @@ pop_vote_2020_adj <-
   select(-c(`BC Liberal Party`, Conservative)) %>% 
   pivot_longer(names_to = 'AFFILIATION', values_to = 'vote_share', cols=1:3)
   
-
 # Modify party names in pop vote 2024 and drop BC Liberals
-pop_vote_2024_adj <- data.frame(
-  AFFILIATION = c('BC NDP', 'BC Green Party', 'BC Conservatives'),
-  vote_share = c(0.419, 0.093, 0.441)
-)
+pop_vote_2024_adj <-pop_vote_2024 %>% 
+  filter(AFFILIATION != 'BC Liberal Party') %>% 
+  mutate(AFFILIATION = gsub('Conservative', 'BC Conservatives', AFFILIATION))
+  
 
 # Calculate the swing
 
