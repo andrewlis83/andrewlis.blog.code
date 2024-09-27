@@ -221,7 +221,7 @@ df_projection %>%
   geom_col(alpha=1) +
   geom_hline(yintercept = 45, color='darkred', linetype='dashed') +
   geom_text(aes(label = projected_seats), color='black', hjust = -0.5) + 
-  scale_y_continuous(limits = c(0, 50)) +
+  scale_y_continuous(limits = c(0, 65)) +
   coord_flip() +
   scale_fill_manual(values = c('darkblue','darkgreen', 'darkorange')) +
   # theme_classic() +
